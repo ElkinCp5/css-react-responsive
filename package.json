@@ -1,6 +1,6 @@
 {
   "name": "css-react-responsive",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Este modulo esta creado para hacer facil la creacion de interfaz de usuario sensibles a las pantallas",
   "main": "src/index.js",
   "scripts": {
