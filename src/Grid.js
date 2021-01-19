@@ -21,6 +21,22 @@ const typeUnit = (value, unit='fr') =>{
         : (typeof value == 'string') ? value : '1fr';
 };
 
+const typeNumber = (value, start, end, type)=>{
+  const notStart = notUndefained(start, 'number');
+  const notEnd   = notUndefained(end, 'number');
+  const notValue = notUndefained(value, 'number');
+  const notType = notUndefained(type, 'string');
+  const validStandar = (notEnd && notStart && notValue && notType);
+  const validFalse = (notEnd && !notStart && notValue);
+
+  // Variante todo deben estar definidos
+  if(validStandar && type == 'sum') return (start < end) ? (value+1) : undefined; 
+  // Variante donde start es indefinido
+  if(validFalse) return (end > 1) ? 1 : undefined;
+  // Estado por defecto
+  return notUndefained(value, 'number') ? value : undefined;
+}
+
 const Styled_Grid_Layout = styled.div`
   display: grid;
   position: ${ props => props.position};
@@ -71,6 +87,10 @@ const Styled_Grid_Layout = styled.div`
     ? ('repeat('+props.xl.columns +','+props.xl.widthColumns+')') : ''};}
   }
 `;
+/**
+ * 
+ * @param {*} param0 
+ */
 
 const GridLayout = (
     {
@@ -134,61 +154,58 @@ const GridLayout = (
 }
 
 const Styled_Row_Table = styled.div`
-  display: ${props => (typeof props.displayFlex !== "undefined") ? 'flex': '' };
+  display: ${props => notUndefained(props.displayFlex) ? 'flex': '' };
   justify-content: ${props => props.justifyContent};
   align-items: ${props => props.alignItems};
-  
+  flex: ${props => props.flex};
+  color: ${ props => props.color};
+  background-color: ${ props => props.backgroundColor};
+  font-weight: ${props => props.fontWeight ? props.fontWeight : '' };
+
   grid-row-start: ${ props => props.rowsStart};
-  grid-row-end: ${ props => props.rowsEnd};
+  grid-row-end: ${ props => props.rowsEnd };
   grid-row-gap: ${ 
-    props => (props.gap && (props.rowsStart || props.rowsEnd)) 
+    props => (props.gap &&  (props.rowsStart || props.rowsEnd)
+      ) 
         ? props.gap : ''
     };
  
   grid-column-start: ${ props => props.columnsStart};
   grid-column-end: ${ props => props.columnsEnd};
   grid-column-gap: ${ 
-    props => (props.gap && (props.columnsEnd || props.columnsStart)) 
+    props => (props.gap && (typeNumber(props.columnsStart) || typeNumber(props.columnsEnd))) 
         ? props.gap : ''
     };
   
   @media only screen and  (min-width:425px) {
-      grid-column-start: ${ props => (notUndefained(props.sm) && props.sm.columnsStart)
+      grid-column-start: ${ props => (notUndefained(props.sm) && notUndefained(props.sm.columnsStart, 'number'))
         ? props.sm.columnsStart : ''};
-      grid-column-end: ${ props => (notUndefained(props.sm) && props.sm.columnsEnd)
-        ? props.sm.columnsEnd : ''};
+      grid-column-end: ${ props => (notUndefained(props.sm) && notUndefained(props.sm.columnsEnd, 'number'))
+        ? (props.sm.columnsEnd+1) : ''};
   }
   @media only screen and (min-width:768px) {
-      grid-column-start: ${ props => (props.md && props.md.columnsStart)
+      grid-column-start: ${ props => (props.md && notUndefained(props.md.columnsStart, 'number'))
     ? props.md.columnsStart : ''};
-      grid-column-end: ${ props => (props.md && props.md.columnsEnd)
-    ? props.md.columnsEnd : ''};
+      grid-column-end: ${ props => (props.md && notUndefained(props.md.columnsEnd, 'number'))
+    ? (props.md.columnsEnd+1) : ''};
   }
   @media only screen and  (min-width:1024px) {
-      grid-column-start: ${ props => (props.lg && props.lg.columnsStart)
+      grid-column-start: ${ props => (props.lg && notUndefained(props.lg.columnsStart, 'number'))
     ? props.lg.columnsStart : ''};
-      grid-column-end: ${ props => (props.lg && props.lg.columnsEnd)
-    ? props.lg.columnsEnd : ''};
+      grid-column-end: ${ props => (props.lg && notUndefained(props.lg.columnsEnd, 'number'))
+    ? (props.lg.columnsEnd+1) : ''};
   }
   @media only screen and  (min-width:1440px) {
-      grid-column-start: ${ props => (props.xl && props.xl.columnsStart)
+      grid-column-start: ${ props => (props.xl && notUndefained(props.xl.columnsStart, 'number'))
     ? props.xl.columnsStart : ''};
-      grid-column-end: ${ props => (props.xl && props.xl.columnsEnd)
-    ? props.xl.columnsEnd : ''};
+      grid-column-end: ${ props => (props.xl && notUndefained(props.xl.columnsEnd, 'number'))
+    ? (props.xl.columnsEnd+1) : ''};
   }
 `;
+
 /**
- *
- * @param gap
- * @param unit
- * @param columnsStart
- * @param columnsEnd
- * @param rowsStart
- * @param rowsEnd
- * @param children
- * @param className
- * @returns {*}
- * @constructor
+ * 
+ * @param {*} param0 
  */
 const GridColumn = (
     {
@@ -199,9 +216,13 @@ const GridColumn = (
         rowsStart,
         rowsEnd,
 
+        flex,
         displayFlex,
         justifyContent,
         alignItems,
+        fontWeight,
+        backgroundColor,
+        color,
 
         children,
         className,
@@ -214,28 +235,33 @@ const GridColumn = (
 ) => {
     return (
         <Styled_Row_Table
-            unit={unit}
-            gap={gap}
-            columnsStart={columnsStart || ((columnsEnd > 1) ? 1: columnsStart)}
-            columnsEnd={(columnsEnd > 1) ? (columnsEnd+1): columnsEnd}
-            rowsStart={rowsStart}
-            rowsEnd={ (rowsEnd > 1) ? (rowsEnd+1) : rowsEnd}
+          unit={unit}
+          gap={gap}
+          columnsStart={typeNumber(columnsStart, columnsStart, columnsEnd )}
+          columnsEnd={typeNumber(columnsEnd, columnsStart, columnsEnd, 'sum')}
 
-            displayFlex={displayFlex}
-            justifyContent={justifyContent}
-            alignItems={alignItems}
+          rowsStart={typeNumber(rowsStart, rowsStart, rowsEnd)}
+          rowsEnd={typeNumber(rowsEnd, rowsStart, rowsEnd, 'sum')}
 
-            className={className}
-            style={style}
-            sm={sm}
-            md={md}
-            lg={lg}
-            xl={xl}
+          fontWeight={fontWeight}
+          backgroundColor={backgroundColor}
+          color={color}
+
+          displayFlex={displayFlex}
+          justifyContent={justifyContent}
+          alignItems={alignItems}
+          flex={flex}
+
+          className={className}
+          style={style}
+          sm={sm}
+          md={md}
+          lg={lg}
+          xl={xl}
         >
             {children}
         </Styled_Row_Table>
     );
 }
 
-export { GridColumn }
-export default GridLayout;
+export default { GridColumn, GridLayout };
